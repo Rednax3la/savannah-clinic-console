@@ -1,0 +1,47 @@
+{
+  "name": "savannah-clinic-console",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=20.19.0"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "run-p type-check \"build-only {@}\" --",
+    "build-only": "vite build",
+    "preview": "vite preview",
+    "type-check": "vue-tsc --build",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test": "vitest",
+    "test:run": "vitest run"
+  },
+  "dependencies": {
+    "pinia": "^4.0.3",
+    "vue": "^3.5.42",
+    "vue-router": "^5.3.1"
+  },
+  "devDependencies": {
+    "@tsconfig/node22": "^22.0.6",
+    "@types/node": "^22.20.2",
+    "@vitejs/plugin-vue": "^6.0.8",
+    "@vitest/eslint-plugin": "^1.6.27",
+    "@vue/eslint-config-prettier": "^10.2.0",
+    "@vue/eslint-config-typescript": "^14.9.0",
+    "@vue/test-utils": "^2.5.0",
+    "@vue/tsconfig": "^0.9.1",
+    "eslint": "^10.10.0",
+    "eslint-plugin-vue": "^10.11.0",
+    "happy-dom": "^20.14.3",
+    "jiti": "^2.7.0",
+    "npm-run-all2": "^8.0.4",
+    "prettier": "^3.9.6",
+    "typescript": "^6.0.3",
+    "vite": "^8.3.0",
+    "vitest": "^5.0.0",
+    "vue-tsc": "^3.3.11"
+  }
+}

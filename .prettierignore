@@ -1,0 +1,8 @@
+dist
+dist-ssr
+coverage
+node_modules
+package-lock.json
+
+# Section 1 deliverable, hand-written and hand-formatted.
+docs/design.md

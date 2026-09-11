@@ -1,0 +1,112 @@
+/**
+ * Global base styles. Deliberately small: a reset, document-level typography,
+ * and one focus style that applies everywhere.
+ *
+ * Component styles live in each component's own <style scoped> block.
+ */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+* {
+  margin: 0;
+}
+
+html {
+  /* Keeps rem units tied to the user's own font size preference. */
+  font-size: 100%;
+}
+
+body {
+  min-height: 100vh;
+  font-family: var(--font-sans);
+  font-size: var(--font-size-base);
+  line-height: var(--line-height-base);
+  color: var(--color-text);
+  background-color: var(--color-surface-muted);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizelegibility;
+}
+
+h1,
+h2,
+h3 {
+  line-height: var(--line-height-tight);
+  font-weight: var(--font-weight-bold);
+}
+
+h1 {
+  font-size: var(--font-size-2xl);
+}
+h2 {
+  font-size: var(--font-size-xl);
+}
+h3 {
+  font-size: var(--font-size-lg);
+}
+
+img,
+picture,
+svg {
+  display: block;
+  max-width: 100%;
+}
+
+input,
+button,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+a {
+  color: var(--color-grape);
+  text-underline-offset: 0.15em;
+}
+
+/**
+ * One visible focus style for the whole app. `:focus-visible` rather than
+ * `:focus` so a mouse click does not leave a ring behind, while every keyboard
+ * user gets one — the app has to be fully keyboard operable.
+ */
+:focus-visible {
+  outline: var(--focus-ring-width) solid var(--focus-ring-color);
+  outline-offset: var(--focus-ring-offset);
+  border-radius: var(--radius-sm);
+}
+
+/** Content that only a screen reader should reach. */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/** Visible only once focused: the skip link in AppHeader. */
+.skip-link:not(:focus) {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
