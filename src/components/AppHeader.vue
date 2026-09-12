@@ -1,15 +1,15 @@
 <script setup lang="ts">
-/**
- * Application header: product name, current user, sign out.
- *
- * Placeholder — the user display and sign-out action are wired to the store's
- * shape but the store methods are stubs.
- */
 import { computed } from 'vue'
+import { useRouter } from 'vue-router'
 
 import { useAuthStore } from '@/stores/auth'
 
 const auth = useAuthStore()
+const router = useRouter()
+async function signOut(): Promise<void> {
+  auth.signOut()
+  await router.replace({ name: 'login' })
+}
 
 const displayName = computed(() => {
   const user = auth.user
@@ -31,7 +31,7 @@ const displayName = computed(() => {
 
       <div class="app-header__user">
         <span v-if="displayName">{{ displayName }}</span>
-        <!-- TODO(section 2): sign out -->
+        <button v-if="auth.refreshToken" type="button" @click="signOut">Sign out</button>
       </div>
     </div>
   </header>
@@ -65,6 +65,9 @@ const displayName = computed(() => {
 
 .app-header__user {
   display: flex;
+  flex-wrap: wrap;
+  min-width: 0;
+  overflow-wrap: anywhere;
   align-items: center;
   gap: var(--space-3);
   font-size: var(--font-size-sm);

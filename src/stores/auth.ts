@@ -1,120 +1,177 @@
-/**
- * Auth store. Holds the session and owns the token lifecycle.
- *
- * Storage split, per docs/design.md:
- *   access token  → memory only. Short-lived and replaceable, so persisting it
- *                   buys nothing and widens the XSS blast radius.
- *   refresh token → sessionStorage. Survives a reload (requirement 3) but dies
- *                   with the tab, which suits a shared ward tablet.
- *   user          → memory, re-fetched from /auth/me when a session is restored.
- *   intended route → sessionStorage, so a mid-session expiry can send the user
- *                   back where they were rather than to the list.
- *
- * Implemented here: state, token plumbing, intended-route handling.
- * Stubbed for Section 2: login, logout's server side, refresh.
- */
-
-import { computed, ref } from 'vue'
+import { computed, onScopeDispose, ref, watch } from 'vue'
 import { defineStore } from 'pinia'
-
+import * as authApi from '@/api/auth'
+import { ApiError, errorMessage } from '@/api/client'
 import type { AuthUser, TokenPair } from '@/types/auth'
-
+import { internalDestination } from '@/utils/navigation'
+import { readSession, writeSession } from '@/utils/storage'
+import { beginProductSession, clearProductSession } from '@/composables/productSession'
 const REFRESH_TOKEN_KEY = 'clinic-console.refreshToken'
 const INTENDED_ROUTE_KEY = 'clinic-console.intendedRoute'
-
-/** sessionStorage throws in private-mode Safari and is absent in SSR. */
-function safeSessionStorage(): Storage | null {
+export function tokenExpiry(token: string): number | null {
   try {
-    return typeof sessionStorage === 'undefined' ? null : sessionStorage
+    const part = token.split('.')[1]
+    if (!part) return null
+    const payload: unknown = JSON.parse(atob(part.replace(/-/g, '+').replace(/_/g, '/')))
+    return payload &&
+      typeof payload === 'object' &&
+      'exp' in payload &&
+      typeof payload.exp === 'number' &&
+      Number.isFinite(payload.exp)
+      ? payload.exp * 1000
+      : null
   } catch {
     return null
   }
 }
-
-function readStored(key: string): string | null {
-  return safeSessionStorage()?.getItem(key) ?? null
-}
-
-function writeStored(key: string, value: string | null): void {
-  const store = safeSessionStorage()
-  if (!store) return
-  if (value === null) store.removeItem(key)
-  else store.setItem(key, value)
-}
-
 export const useAuthStore = defineStore('auth', () => {
   const accessToken = ref<string | null>(null)
-  const refreshToken = ref<string | null>(readStored(REFRESH_TOKEN_KEY))
+  const refreshToken = ref<string | null>(readSession(REFRESH_TOKEN_KEY))
   const user = ref<AuthUser | null>(null)
-
-  /** True once we hold a usable access token. */
+  const isRestoring = ref(false)
+  const sessionError = ref<string | null>(null)
   const isAuthenticated = computed(() => accessToken.value !== null)
-
-  /**
-   * True when there is a refresh token but no access token: a reloaded tab that
-   * might still have a valid session. The router guard waits on this rather than
-   * bouncing the user to /login before we have tried to restore.
-   */
   const canRestoreSession = computed(
     () => accessToken.value === null && refreshToken.value !== null,
   )
-
-  const isRestoring = ref(false)
-
+  let intendedRoute = readSession(INTENDED_ROUTE_KEY)
+  let refreshPromise: Promise<boolean> | null = null
+  let generation = 0
+  let timer: ReturnType<typeof setTimeout> | undefined
+  let monitoring = false
   function setTokens(tokens: TokenPair): void {
     accessToken.value = tokens.accessToken
     refreshToken.value = tokens.refreshToken
-    writeStored(REFRESH_TOKEN_KEY, tokens.refreshToken)
+    writeSession(REFRESH_TOKEN_KEY, tokens.refreshToken)
   }
-
   function clearSession(): void {
+    generation++
+    clearTimeout(timer)
     accessToken.value = null
     refreshToken.value = null
     user.value = null
-    writeStored(REFRESH_TOKEN_KEY, null)
+    sessionError.value = null
+    refreshPromise = null
+    isRestoring.value = false
+    writeSession(REFRESH_TOKEN_KEY, null)
+    clearProductSession()
   }
-
-  /** Remembered before redirecting to /login, consumed once after sign-in. */
-  function rememberIntendedRoute(fullPath: string): void {
-    // Never send the user back to the login screen itself.
-    if (fullPath.startsWith('/login')) return
-    writeStored(INTENDED_ROUTE_KEY, fullPath)
+  function rememberIntendedRoute(path: string): void {
+    const safe = internalDestination(path)
+    if (!safe) return
+    intendedRoute = safe
+    writeSession(INTENDED_ROUTE_KEY, safe)
   }
-
   function consumeIntendedRoute(): string | null {
-    const route = readStored(INTENDED_ROUTE_KEY)
-    writeStored(INTENDED_ROUTE_KEY, null)
+    const route = internalDestination(intendedRoute)
+    intendedRoute = null
+    writeSession(INTENDED_ROUTE_KEY, null)
     return route
   }
-
-  function notImplemented(name: string): never {
-    throw new Error(`${name} is not implemented yet`)
+  async function signIn(username: string, password: string): Promise<void> {
+    const current = ++generation
+    clearTimeout(timer)
+    refreshPromise = null
+    const response = await authApi.login(username, password)
+    if (current !== generation) return
+    const { accessToken: access, refreshToken: refresh, ...profile } = response
+    user.value = profile
+    isRestoring.value = false
+    beginProductSession(profile.id)
+    sessionError.value = null
+    setTokens({ accessToken: access, refreshToken: refresh })
   }
-
-  /** TODO(section 2): call api/auth login, store tokens and user. */
-  function signIn(_username: string, _password: string): Promise<void> {
-    return notImplemented('signIn')
-  }
-
-  /** TODO(section 2): exchange the refresh token; clear the session on failure. */
   function refreshSession(): Promise<boolean> {
-    return notImplemented('refreshSession')
+    if (refreshPromise) return refreshPromise
+    const refresh = refreshToken.value
+    if (!refresh) {
+      clearSession()
+      return Promise.resolve(false)
+    }
+    const current = generation
+    isRestoring.value = true
+    sessionError.value = null
+    const pending = (async () => {
+      try {
+        const tokens = await authApi.refreshTokens(refresh)
+        if (current !== generation) return false
+        setTokens(tokens)
+        if (!user.value) {
+          const profile = await authApi.fetchCurrentUser(tokens.accessToken)
+          if (current !== generation) return false
+          user.value = profile
+          beginProductSession(profile.id)
+        }
+        return true
+      } catch (error) {
+        if (current !== generation) return false
+        if (error instanceof ApiError && [400, 401, 403].includes(error.status)) {
+          clearSession()
+          return false
+        }
+        // Offline/5xx is recoverable. Keep the refresh token and require an explicit
+        // retry rather than polling, clearing the session, or showing protected data.
+        sessionError.value = errorMessage(error)
+        clearTimeout(timer)
+        throw error
+      } finally {
+        if (current === generation) {
+          isRestoring.value = false
+          refreshPromise = null
+        }
+      }
+    })()
+    refreshPromise = pending
+    return pending
   }
-
-  /** TODO(section 2): re-fetch /auth/me after a reload restores tokens. */
-  function restoreSession(): Promise<void> {
-    return notImplemented('restoreSession')
+  function ensureSession(): Promise<boolean> {
+    if (refreshPromise) return refreshPromise
+    const expiry = accessToken.value ? tokenExpiry(accessToken.value) : null
+    if (accessToken.value && user.value && expiry !== null && expiry > Date.now() + 1000)
+      return Promise.resolve(true)
+    return refreshSession()
   }
-
+  async function restoreSession(): Promise<void> {
+    await ensureSession()
+  }
+  async function retrySession(): Promise<void> {
+    try {
+      await refreshSession()
+    } catch {
+      /* sessionError supplies the recovery UI. */
+    }
+  }
+  function scheduleExpiry(): void {
+    clearTimeout(timer)
+    if (!monitoring || !accessToken.value) return
+    const expiry = tokenExpiry(accessToken.value)
+    // JWT decoding only schedules refresh; /auth/refresh and /auth/me validate credentials.
+    timer = setTimeout(
+      () => {
+        void retrySession()
+      },
+      Math.min(2_147_483_647, Math.max(0, (expiry ?? Date.now()) - Date.now())),
+    )
+  }
+  watch(accessToken, scheduleExpiry, { flush: 'sync' })
+  function startExpiryMonitor(): void {
+    monitoring = true
+    scheduleExpiry()
+  }
+  onScopeDispose(() => {
+    monitoring = false
+    clearTimeout(timer)
+  })
   function signOut(): void {
     clearSession()
+    consumeIntendedRoute()
   }
-
   return {
     accessToken,
     refreshToken,
     user,
     isRestoring,
+    sessionError,
     isAuthenticated,
     canRestoreSession,
     setTokens,
@@ -123,7 +180,10 @@ export const useAuthStore = defineStore('auth', () => {
     consumeIntendedRoute,
     signIn,
     refreshSession,
+    ensureSession,
     restoreSession,
+    retrySession,
+    startExpiryMonitor,
     signOut,
   }
 })

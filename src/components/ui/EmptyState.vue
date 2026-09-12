@@ -1,8 +1,4 @@
 <script setup lang="ts">
-/**
- * Empty result. Not an error: no ARIA alert, no red, and the message is passed
- * in by the caller so it can name what was actually searched for.
- */
 withDefaults(
   defineProps<{
     title?: string

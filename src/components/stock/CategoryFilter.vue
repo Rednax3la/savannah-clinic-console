@@ -1,18 +1,10 @@
 <script setup lang="ts">
-/**
- * Category filter. Placeholder.
- *
- * A native <select> rather than a custom dropdown: it is keyboard operable and
- * screen-reader correct with no work from us, and on a ward tablet it opens the
- * platform picker, which is the larger tap target.
- */
 import type { Category } from '@/types/product'
 
 withDefaults(
   defineProps<{
-    /** Empty string means "all categories". */
     modelValue: string
-    categories?: Category[]
+    categories?: readonly Category[]
     disabled?: boolean
   }>(),
   { categories: () => [], disabled: false },
@@ -33,6 +25,12 @@ defineEmits<{ 'update:modelValue': [value: string] }>()
       @change="$emit('update:modelValue', ($event.target as HTMLSelectElement).value)"
     >
       <option value="">All categories</option>
+      <option
+        v-if="modelValue && !categories.some((category) => category.slug === modelValue)"
+        :value="modelValue"
+      >
+        {{ modelValue }} (unavailable category)
+      </option>
       <option v-for="category in categories" :key="category.slug" :value="category.slug">
         {{ category.name }}
       </option>
@@ -42,6 +40,7 @@ defineEmits<{ 'update:modelValue': [value: string] }>()
 
 <style scoped>
 .filter {
+  grid-template-columns: minmax(0, 1fr);
   display: grid;
   gap: var(--space-1);
 }

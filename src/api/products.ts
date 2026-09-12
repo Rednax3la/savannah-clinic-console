@@ -1,55 +1,59 @@
-/**
- * Product endpoints. Signatures are final; bodies are stubs for Section 2.
- *
- * Note the split below: DummyJSON has no single endpoint that accepts a search
- * term and a category together, so the caller has to choose one. That
- * limitation is why these are three functions rather than one.
- */
-
+import { http } from './client'
 import type { Category, Product, ProductListQuery, ProductListResponse } from '@/types/product'
-
-function notImplemented(name: string): never {
-  throw new Error(`${name} is not implemented yet`)
-}
-
 export interface ListRequest {
   query: ProductListQuery
   signal?: AbortSignal
-  /** Test-only slow-connection simulation, passed through to ?delay=. */
-  delayMs?: number
 }
-
-/** GET /products — supports limit, skip, sortBy, order. */
-export function listProducts(_request: ListRequest): Promise<ProductListResponse> {
-  return notImplemented('listProducts')
+const LIST_FIELDS = 'id,title,description,category,price,stock,thumbnail,meta'
+export function selectProductPage(
+  products: Product[],
+  query: ProductListQuery,
+): ProductListResponse {
+  const matching = products.filter(
+    (product) => !query.category || product.category === query.category,
+  )
+  const direction = query.order === 'asc' ? 1 : -1
+  matching.sort((a, b) => {
+    let comparison: number
+    if (query.sortBy === 'meta.createdAt')
+      comparison = (a.meta?.createdAt ?? '').localeCompare(b.meta?.createdAt ?? '')
+    else if (query.sortBy === 'title')
+      comparison = a.title.localeCompare(b.title, 'en', { numeric: true, sensitivity: 'base' })
+    else comparison = a[query.sortBy] - b[query.sortBy]
+    return comparison * direction || a.id - b.id
+  })
+  const pageCount = Math.max(1, Math.ceil(matching.length / query.pageSize))
+  const skip = (Math.min(query.page, pageCount) - 1) * query.pageSize
+  return {
+    products: matching.slice(skip, skip + query.pageSize),
+    total: matching.length,
+    skip,
+    limit: query.pageSize,
+  }
 }
-
-/** GET /products/search?q= — ignores sortBy/order server-side. */
-export function searchProducts(_request: ListRequest): Promise<ProductListResponse> {
-  return notImplemented('searchProducts')
+export async function listProducts({ query, signal }: ListRequest): Promise<ProductListResponse> {
+  // Verified against DummyJSON: search supports sorting; limit=0 fetches the whole
+  // matching set. Fetch selected fields, intersect category, apply corrected counts,
+  // sort deterministically, THEN paginate. Never filter just the current page.
+  // This bounded mock catalogue needs no query library or aggressive list cache.
+  const result = await http.get<ProductListResponse>(query.q ? '/products/search' : '/products', {
+    query: { q: query.q, limit: 0, select: LIST_FIELDS },
+    delayMs: query.delayMs,
+    ...(signal ? { signal } : {}),
+  })
+  signal?.throwIfAborted()
+  return result
 }
-
-/** GET /products/category/{slug} */
-export function listProductsByCategory(_request: ListRequest): Promise<ProductListResponse> {
-  return notImplemented('listProductsByCategory')
+export function fetchCategories(): Promise<Category[]> {
+  return http.get('/products/categories')
 }
-
-/** GET /products/categories — returns objects with slug/name/url. */
-export function fetchCategories(_signal?: AbortSignal): Promise<Category[]> {
-  return notImplemented('fetchCategories')
+export function fetchProduct(id: number, signal?: AbortSignal, delayMs = 0): Promise<Product> {
+  return http.get(`/products/${id}`, { delayMs, ...(signal ? { signal } : {}) })
 }
-
-/** GET /products/{id} */
-export function fetchProduct(_id: number, _signal?: AbortSignal): Promise<Product> {
-  return notImplemented('fetchProduct')
-}
-
-/**
- * PUT /products/{id} — the stock correction.
- *
- * DummyJSON simulates the write: it echoes the updated object back but does not
- * persist it, so a later GET returns the old count.
- */
-export function updateProductStock(_id: number, _stock: number): Promise<Product> {
-  return notImplemented('updateProductStock')
+export function updateProductStock(
+  id: number,
+  stock: number,
+  signal?: AbortSignal,
+): Promise<Product> {
+  return http.put(`/products/${id}`, { stock }, { ...(signal ? { signal } : {}) })
 }

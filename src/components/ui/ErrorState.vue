@@ -1,16 +1,9 @@
 <script setup lang="ts">
-/**
- * Error state. Always carries a recovery action — the brief requires that every
- * error offers the user a way forward, so `retry` is part of the contract
- * rather than an optional extra.
- */
 withDefaults(
   defineProps<{
     title?: string
-    /** Human-readable detail. Never a raw stack trace. */
     message?: string
     retryLabel?: string
-    /** Set while a retry is in flight, to stop repeat submissions. */
     pending?: boolean
   }>(),
   {

@@ -16,3 +16,6 @@ coverage
 *.tsbuildinfo
 *.log
 npm-debug.log*
+
+# Browser verification artifacts
+test-results/

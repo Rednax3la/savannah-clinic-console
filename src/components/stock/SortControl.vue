@@ -1,10 +1,4 @@
 <script setup lang="ts">
-/**
- * Sort control. Placeholder.
- *
- * Field and direction are one <select> rather than two controls: the useful
- * combinations are few, and one choice is faster than two on a tablet.
- */
 import type { ProductSortField, SortOrder } from '@/types/product'
 
 defineProps<{
@@ -16,6 +10,8 @@ defineProps<{
 const emit = defineEmits<{ change: [value: { sortBy: ProductSortField; order: SortOrder }] }>()
 
 const OPTIONS: { value: string; label: string; sortBy: ProductSortField; order: SortOrder }[] = [
+  { value: 'meta.createdAt-desc', label: 'Newest first', sortBy: 'meta.createdAt', order: 'desc' },
+  { value: 'meta.createdAt-asc', label: 'Oldest first', sortBy: 'meta.createdAt', order: 'asc' },
   { value: 'title-asc', label: 'Name (A–Z)', sortBy: 'title', order: 'asc' },
   { value: 'title-desc', label: 'Name (Z–A)', sortBy: 'title', order: 'desc' },
   { value: 'stock-asc', label: 'Stock (lowest first)', sortBy: 'stock', order: 'asc' },
@@ -24,7 +20,6 @@ const OPTIONS: { value: string; label: string; sortBy: ProductSortField; order: 
   { value: 'price-desc', label: 'Price (highest first)', sortBy: 'price', order: 'desc' },
 ]
 
-/** Splits the combined option back into the two params the URL carries. */
 function onChange(event: Event) {
   const value = (event.target as HTMLSelectElement).value
   const option = OPTIONS.find((candidate) => candidate.value === value)
@@ -53,6 +48,7 @@ function onChange(event: Event) {
 
 <style scoped>
 .sort {
+  grid-template-columns: minmax(0, 1fr);
   display: grid;
   gap: var(--space-1);
 }

@@ -35,21 +35,16 @@ export default defineConfigWithVueTs(
       '@typescript-eslint/no-explicit-any': 'error',
       '@typescript-eslint/consistent-type-imports': ['error', { fixStyle: 'inline-type-imports' }],
 
-      // Console noise should not reach the deployed console; warn so it still
-      // fails CI (which runs eslint --max-warnings 0) without blocking local work.
+      // npm run lint uses --max-warnings 0 locally and in the PR pipeline.
       'no-console': ['warn', { allow: ['warn', 'error'] }],
       'no-debugger': 'error',
 
-      // Props/emits are part of a component's public contract; requiring explicit
-      // types on them keeps that contract readable from the outside.
+      // Keep component declarations ordered and use the same setup style.
       'vue/define-macros-order': ['error', { order: ['defineProps', 'defineEmits'] }],
       'vue/component-api-style': ['error', ['script-setup']],
       'vue/component-name-in-template-casing': ['error', 'PascalCase'],
 
-      // Disabled: this rule wants multi-word component names, but the design doc
-      // names views and UI primitives directly (LoginView, ErrorState), and the
-      // file-name-based names are already unambiguous in this small tree.
-      'vue/multi-word-component-names': 'off',
+      'vue/multi-word-component-names': 'error',
     },
   },
 
@@ -58,7 +53,7 @@ export default defineConfigWithVueTs(
     // is what makes this block identifiable in `eslint --inspect-config`.
     ...pluginVitest.configs.recommended,
     name: 'app/test-rules',
-    files: ['src/**/__tests__/*'],
+    files: ['src/**/__tests__/**/*'],
   },
 
   skipFormatting,

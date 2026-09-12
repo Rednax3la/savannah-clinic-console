@@ -1,16 +1,8 @@
 <script setup lang="ts">
-/**
- * Previous / page / next. Placeholder.
- *
- * Buttons that emit, not RouterLinks: the view owns the URL and knows which
- * other params have to be preserved when the page changes.
- */
 withDefaults(
   defineProps<{
-    /** 1-based, matching what the user sees. */
     page?: number
     pageCount?: number
-    /** Dimmed rather than removed while a fetch is in flight. */
     disabled?: boolean
   }>(),
   { page: 1, pageCount: 1, disabled: false },
@@ -30,9 +22,19 @@ defineEmits<{ 'update:page': [page: number] }>()
       Previous
     </button>
 
-    <!-- aria-live: a keyboard user who activates Next hears the new position
-         without having to go looking for it. -->
-    <p class="pagination__status" aria-live="polite">Page {{ page }} of {{ pageCount }}</p>
+    <!-- Native select exposes the current page and supports keyboard selection. -->
+    <label class="pagination__status"
+      >Page
+      <select
+        aria-label="Stock page"
+        :value="page"
+        :disabled="disabled"
+        @change="$emit('update:page', Number(($event.target as HTMLSelectElement).value))"
+      >
+        <option v-for="number in pageCount" :key="number" :value="number">{{ number }}</option>
+      </select>
+      of {{ pageCount }}
+    </label>
 
     <button
       class="pagination__button"

@@ -5,7 +5,7 @@
  * identity and structure, Conifer lime for the few high-visibility actions,
  * white for framing. The lime is a light colour (it fails contrast against
  * white for text), so it is only ever used as a *background* under purple text,
- * or as a focus ring — never as text on white.
+ * never as text on white. Focus outlines use purple or white.
  */
 
 :root {
@@ -70,7 +70,7 @@
   /* 44px: the minimum tap target the design doc requires on mobile. */
   --tap-target-min: 2.75rem;
   --focus-ring-width: 3px;
-  --focus-ring-color: var(--color-lime-dark);
+  --focus-ring-color: var(--color-grape);
   --focus-ring-offset: 2px;
 
   /* ---- Layout ---- */

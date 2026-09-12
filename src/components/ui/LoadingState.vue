@@ -1,12 +1,7 @@
 <script setup lang="ts">
-/**
- * Loading placeholder. Two variants because the design doc calls for skeleton
- * rows on the list and a spinner on the detail screen.
- */
 withDefaults(
   defineProps<{
     variant?: 'skeleton' | 'spinner'
-    /** Number of skeleton rows to draw. Ignored by the spinner variant. */
     rows?: number
     label?: string
   }>(),
@@ -15,9 +10,9 @@ withDefaults(
 </script>
 
 <template>
-  <!-- aria-busy + a polite live region: a screen reader user is told that
+  <!-- A polite live region: a screen reader user is told that
        something is loading without the DOM churn being announced row by row. -->
-  <div class="loading" role="status" aria-live="polite" aria-busy="true">
+  <div class="loading" role="status" aria-live="polite">
     <span class="visually-hidden">{{ label }}</span>
 
     <template v-if="variant === 'skeleton'">

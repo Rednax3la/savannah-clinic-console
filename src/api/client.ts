@@ -1,25 +1,11 @@
-/**
- * Base HTTP client. Skeleton only: the transport is real, the auth/refresh
- * behaviour is stubbed out and marked below.
- *
- * Everything that talks to DummyJSON goes through here so that auth headers,
- * 401 handling and cancellation live in exactly one place rather than being
- * re-derived in every composable.
- */
-
-export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'https://dummyjson.com'
-
-/**
- * A failed request, normalised. Callers branch on `status`, so they never have
- * to know whether the failure came from fetch, from JSON parsing, or from the
- * server returning a 500.
- */
+export const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || 'https://dummyjson.com').replace(
+  /\/+$/,
+  '',
+)
 export class ApiError extends Error {
-  /** HTTP status, or 0 when the request never reached the server. */
   readonly status: number
   readonly url: string
   readonly body: unknown
-
   constructor(message: string, options: { status: number; url: string; body?: unknown }) {
     super(message)
     this.name = 'ApiError'
@@ -27,163 +13,153 @@ export class ApiError extends Error {
     this.url = options.url
     this.body = options.body
   }
-
-  /** True when the request failed for a reason a retry could plausibly fix. */
   get isRetryable(): boolean {
     return this.status === 0 || this.status >= 500 || this.status === 429
   }
-
-  /** True when the caller should attempt a token refresh before giving up. */
   get isUnauthorized(): boolean {
     return this.status === 401
   }
 }
-
+export function isAbortError(error: unknown): boolean {
+  return error instanceof Error && error.name === 'AbortError'
+}
+export function errorMessage(error: unknown): string {
+  if (error instanceof ApiError) return error.message
+  return 'Something unexpected happened. Please try again.'
+}
 export interface RequestOptions {
-  method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'
-  /** Serialised as JSON. */
+  method?: 'GET' | 'POST' | 'PUT'
   body?: unknown
-  /** Query params. Null and undefined values are dropped, not sent as "null". */
   query?: Record<string, string | number | boolean | null | undefined>
-  /** Lets a composable cancel a request that a newer one has superseded. */
   signal?: AbortSignal
-  /** Attach the bearer token. Off for /auth/login, which has no token yet. */
   auth?: boolean
-  /**
-   * Artificial server-side delay in ms, for testing slow connections.
-   * DummyJSON accepts 0–5000.
-   */
+  headers?: HeadersInit
   delayMs?: number
 }
-
-/** Builds a URL, dropping empty params so we never send `?category=null`. */
 export function buildUrl(path: string, options: RequestOptions = {}): string {
-  const url = new URL(path.startsWith('/') ? path.slice(1) : path, `${API_BASE_URL}/`)
-
+  const url = new URL(path.replace(/^\//, ''), `${API_BASE_URL}/`)
+  if (url.origin !== new URL(API_BASE_URL).origin)
+    throw new Error('API requests must use the configured origin')
   for (const [key, value] of Object.entries(options.query ?? {})) {
-    if (value === null || value === undefined || value === '') continue
-    url.searchParams.set(key, String(value))
+    if (value !== null && value !== undefined && value !== '')
+      url.searchParams.set(key, String(value))
   }
-
-  if (options.delayMs !== undefined && options.delayMs > 0) {
-    url.searchParams.set('delay', String(Math.min(options.delayMs, 5000)))
-  }
-
+  if (options.delayMs && Number.isFinite(options.delayMs))
+    url.searchParams.set('delay', String(Math.min(5000, Math.max(0, options.delayMs))))
   return url.toString()
 }
-
-/**
- * Hook the auth store installs at startup so the client can read the current
- * access token without importing the store (which would be a circular import,
- * since the store calls the client).
- */
-type TokenProvider = () => string | null
-let getAccessToken: TokenProvider = () => null
-
-export function setTokenProvider(provider: TokenProvider): void {
+let getAccessToken: () => string | null = () => null
+let beforeRequest: (() => Promise<boolean>) | null = null
+let onUnauthorized: (() => Promise<boolean>) | null = null
+let onRejectedToken: (() => void) | null = null
+export function setTokenProvider(provider: () => string | null): void {
   getAccessToken = provider
 }
-
-/**
- * Hook invoked on a 401 so the client can attempt one refresh and replay the
- * request. Returns true if the refresh succeeded and a retry is worthwhile.
- */
-type UnauthorizedHandler = () => Promise<boolean>
-let onUnauthorized: UnauthorizedHandler | null = null
-
-export function setUnauthorizedHandler(handler: UnauthorizedHandler | null): void {
-  onUnauthorized = handler
+export function setSessionHandlers(
+  handlers: {
+    ensure: () => Promise<boolean>
+    refresh: () => Promise<boolean>
+    reject: () => void
+  } | null,
+): void {
+  beforeRequest = handlers?.ensure ?? null
+  onUnauthorized = handlers?.refresh ?? null
+  onRejectedToken = handlers?.reject ?? null
 }
-
-/** Performs a single request. No refresh, no retry — see `request`. */
-async function requestOnce<T>(path: string, options: RequestOptions = {}): Promise<T> {
+function messageFrom(body: unknown): string | null {
+  return body !== null &&
+    typeof body === 'object' &&
+    'message' in body &&
+    typeof body.message === 'string'
+    ? body.message
+    : null
+}
+async function requestOnce<T>(path: string, options: RequestOptions): Promise<T> {
   const url = buildUrl(path, options)
-  const headers = new Headers({ Accept: 'application/json' })
-
-  if (options.body !== undefined) {
-    headers.set('Content-Type', 'application/json')
-  }
-
-  if (options.auth !== false) {
-    const token = getAccessToken()
-    if (token) headers.set('Authorization', `Bearer ${token}`)
-  }
-
+  const headers = new Headers(options.headers)
+  headers.set('Accept', 'application/json')
+  if (options.body !== undefined) headers.set('Content-Type', 'application/json')
+  const token = getAccessToken()
+  if (options.auth !== false && token) headers.set('Authorization', `Bearer ${token}`)
+  // Serialize outside the transport catch: a circular body is a programming error.
+  const body = options.body === undefined ? null : JSON.stringify(options.body)
   let response: Response
+  let raw: string
   try {
     response = await fetch(url, {
       method: options.method ?? 'GET',
       headers,
-      body: options.body === undefined ? null : JSON.stringify(options.body),
+      body,
       ...(options.signal ? { signal: options.signal } : {}),
     })
+    raw = await response.text()
   } catch (cause) {
-    // AbortError is a deliberate cancellation, not a failure: let it through
-    // untouched so callers can ignore it instead of rendering an error state.
-    if (cause instanceof DOMException && cause.name === 'AbortError') throw cause
-    throw new ApiError('Network request failed', { status: 0, url, body: cause })
+    if (isAbortError(cause)) throw cause
+    throw new ApiError('The server could not be reached. Check your connection and retry.', {
+      status: 0,
+      url,
+      body: cause,
+    })
   }
-
-  // Parse before the ok check: DummyJSON puts its reason in the body.
-  const raw = await response.text()
   let parsed: unknown = null
-  if (raw.length > 0) {
+  if (raw) {
     try {
       parsed = JSON.parse(raw)
     } catch {
-      parsed = raw
+      if (response.ok)
+        throw new ApiError('The server returned an unreadable response. Please retry.', {
+          status: response.status,
+          url,
+        })
     }
   }
-
-  if (!response.ok) {
-    throw new ApiError(extractMessage(parsed) ?? `Request failed (${response.status})`, {
+  if (!response.ok)
+    throw new ApiError(
+      messageFrom(parsed) ?? `Request failed (${response.status}). Please retry.`,
+      { status: response.status, url, body: parsed },
+    )
+  if (parsed === null && response.status !== 204)
+    throw new ApiError('The server returned an empty response. Please retry.', {
       status: response.status,
       url,
-      body: parsed,
     })
-  }
-
   return parsed as T
 }
-
-function extractMessage(body: unknown): string | null {
-  if (typeof body === 'string' && body.length > 0) return body
-  if (body !== null && typeof body === 'object' && 'message' in body) {
-    // `in` has already narrowed `body`, so no cast is needed here.
-    const { message } = body
-    if (typeof message === 'string') return message
-  }
-  return null
-}
-
-/**
- * Performs a request, refreshing the token once on a 401 and replaying it.
- *
- * TODO(section 2): wire the refresh-and-replay path. Currently a 401 propagates
- * straight to the caller; `onUnauthorized` is read but not yet installed.
- */
 export async function request<T>(path: string, options: RequestOptions = {}): Promise<T> {
+  options.signal?.throwIfAborted()
+  if (options.auth !== false && beforeRequest && !(await beforeRequest()))
+    throw new ApiError('Please sign in again.', { status: 401, url: buildUrl(path) })
+  options.signal?.throwIfAborted()
+  const sentToken = getAccessToken()
   try {
     return await requestOnce<T>(path, options)
   } catch (error) {
     if (
-      error instanceof ApiError &&
-      error.isUnauthorized &&
-      onUnauthorized &&
-      options.auth !== false
-    ) {
-      const refreshed = await onUnauthorized()
-      if (refreshed) return await requestOnce<T>(path, options)
+      !(error instanceof ApiError) ||
+      !error.isUnauthorized ||
+      options.auth === false ||
+      !onUnauthorized
+    )
+      throw error
+    options.signal?.throwIfAborted()
+    // A late 401 for an old token must reuse the token another caller just refreshed.
+    const refreshed =
+      (getAccessToken() !== sentToken && getAccessToken() !== null) || (await onUnauthorized())
+    options.signal?.throwIfAborted()
+    if (!refreshed) throw error
+    try {
+      return await requestOnce<T>(path, options)
+    } catch (retryError) {
+      if (retryError instanceof ApiError && retryError.isUnauthorized) onRejectedToken?.()
+      throw retryError
     }
-    throw error
   }
 }
-
 export const http = {
   get: <T>(path: string, options?: Omit<RequestOptions, 'method' | 'body'>) =>
     request<T>(path, { ...options, method: 'GET' }),
-  post: <T>(path: string, body?: unknown, options?: Omit<RequestOptions, 'method' | 'body'>) =>
+  post: <T>(path: string, body: unknown, options?: Omit<RequestOptions, 'method' | 'body'>) =>
     request<T>(path, { ...options, method: 'POST', body }),
-  put: <T>(path: string, body?: unknown, options?: Omit<RequestOptions, 'method' | 'body'>) =>
+  put: <T>(path: string, body: unknown, options?: Omit<RequestOptions, 'method' | 'body'>) =>
     request<T>(path, { ...options, method: 'PUT', body }),
 }

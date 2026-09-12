@@ -1,117 +1,102 @@
 <script setup lang="ts">
-/**
- * Sign-in screen. Placeholder.
- *
- * The form fields are local component state by design: a half-typed password
- * belongs nowhere else. Submission is stubbed for Section 2.
- */
 import { ref } from 'vue'
-
+import { useRouter } from 'vue-router'
+import { useAuthStore } from '@/stores/auth'
+import { errorMessage } from '@/api/client'
+const auth = useAuthStore()
+const router = useRouter()
 const username = ref('')
 const password = ref('')
-
-// TODO(section 2): submit handler, inline validation, page-level auth error,
-// pending state on the button, redirect to the intended route.
+const pending = ref(false)
+const attempted = ref(false)
+const error = ref('')
+async function submit(): Promise<void> {
+  if (pending.value) return
+  attempted.value = true
+  if (!username.value.trim() || !password.value) return
+  error.value = ''
+  pending.value = true
+  try {
+    await auth.signIn(username.value.trim(), password.value)
+    password.value = ''
+    await router.replace(auth.consumeIntendedRoute() ?? '/')
+  } catch (cause) {
+    error.value = errorMessage(cause)
+  } finally {
+    pending.value = false
+  }
+}
 </script>
-
 <template>
-  <section class="login">
-    <h1 class="login__title">Sign in</h1>
-    <p class="login__intro">Sign in to view the clinic stock catalogue.</p>
-
-    <form class="login__form" novalidate @submit.prevent>
+  <section class="login" aria-labelledby="login-title">
+    <h1 id="login-title">Sign in</h1>
+    <p>Sign in to view the clinic stock catalogue.</p>
+    <form class="login__form" novalidate @submit.prevent="submit">
       <div class="field">
-        <label class="field__label" for="username">Username</label>
+        <label for="username">Username</label>
         <input
           id="username"
           v-model="username"
-          class="field__input"
           name="username"
-          type="text"
           autocomplete="username"
           required
+          :disabled="pending"
+          :aria-invalid="attempted && !username.trim()"
+          :aria-describedby="attempted && !username.trim() ? 'username-error' : undefined"
         />
+        <p v-if="attempted && !username.trim()" id="username-error" class="field-error">
+          Enter your username.
+        </p>
       </div>
-
       <div class="field">
-        <label class="field__label" for="password">Password</label>
+        <label for="password">Password</label>
         <input
           id="password"
           v-model="password"
-          class="field__input"
           name="password"
           type="password"
           autocomplete="current-password"
           required
+          :disabled="pending"
+          :aria-invalid="attempted && !password"
+          :aria-describedby="attempted && !password ? 'password-error' : undefined"
         />
+        <p v-if="attempted && !password" id="password-error" class="field-error">
+          Enter your password.
+        </p>
       </div>
-
-      <button class="login__submit" type="submit" disabled>Sign in</button>
-
-      <p class="login__note">Not wired up yet.</p>
+      <p v-if="error" role="alert" class="field-error">{{ error }} You can try signing in again.</p>
+      <button type="submit" :disabled="pending">{{ pending ? 'Signing in...' : 'Sign in' }}</button>
+      <p role="status" class="visually-hidden">{{ pending ? 'Signing in' : '' }}</p>
     </form>
   </section>
 </template>
-
 <style scoped>
 .login {
-  max-width: 24rem;
+  max-width: 26rem;
   margin-inline: auto;
   padding: var(--space-5);
-  background-color: var(--color-surface);
+  display: grid;
+  gap: var(--space-3);
+  background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-sm);
 }
-
-.login__intro {
-  margin-top: var(--space-2);
-  color: var(--color-text-muted);
-  font-size: var(--font-size-sm);
-}
-
-.login__form {
-  display: grid;
-  gap: var(--space-4);
-  margin-top: var(--space-5);
-}
-
+.login__form,
 .field {
   display: grid;
-  gap: var(--space-1);
+  gap: var(--space-2);
+  min-width: 0;
 }
-
-.field__label {
+.login__form {
+  gap: var(--space-4);
+}
+input {
+  width: 100%;
+  min-width: 0;
+}
+.login__hint {
   font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-medium);
-}
-
-.field__input {
-  min-height: var(--tap-target-min);
-  padding: var(--space-2) var(--space-3);
-  background-color: var(--color-surface);
-  border: 1px solid var(--color-border-strong);
-  border-radius: var(--radius-md);
-}
-
-.login__submit {
-  min-height: var(--tap-target-min);
-  padding-inline: var(--space-4);
-  color: var(--color-text-on-lime);
-  background-color: var(--color-lime);
-  border: 1px solid var(--color-lime-dark);
-  border-radius: var(--radius-md);
-  font-weight: var(--font-weight-bold);
-  cursor: pointer;
-}
-
-.login__submit:disabled {
-  cursor: not-allowed;
-  opacity: 0.6;
-}
-
-.login__note {
   color: var(--color-text-muted);
-  font-size: var(--font-size-xs);
 }
 </style>

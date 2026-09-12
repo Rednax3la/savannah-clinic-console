@@ -1,13 +1,5 @@
 <script setup lang="ts">
-/**
- * Search box. Placeholder.
- *
- * Presentational on purpose: it emits what was typed and never fetches. The
- * request lifecycle (and the AbortController that keeps a stale response from
- * overwriting a newer one) belongs to useProducts.
- */
 defineProps<{
-  /** Current search term, from the URL. */
   modelValue: string
 }>()
 

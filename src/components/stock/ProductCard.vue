@@ -1,10 +1,7 @@
 <script setup lang="ts">
-/**
- * Single stock item as a card, for narrow screens. Placeholder.
- */
 import type { Product } from '@/types/product'
 
-defineProps<{ product: Product }>()
+withDefaults(defineProps<{ product: Product; listUrl?: string }>(), { listUrl: '/' })
 </script>
 
 <template>
@@ -12,7 +9,10 @@ defineProps<{ product: Product }>()
     <h3 class="card__title">
       <!-- The whole title is the link target: a bigger tap area than an icon,
            and the accessible name is the item name rather than "view". -->
-      <RouterLink :to="{ name: 'item-detail', params: { id: product.id } }">
+      <RouterLink
+        class="touch-link"
+        :to="{ name: 'item-detail', params: { id: product.id }, query: { from: listUrl } }"
+      >
         {{ product.title }}
       </RouterLink>
     </h3>
@@ -25,6 +25,10 @@ defineProps<{ product: Product }>()
       <div>
         <dt>Stock</dt>
         <dd>{{ product.stock }}</dd>
+      </div>
+      <div>
+        <dt>Price (USD)</dt>
+        <dd>{{ product.price.toFixed(2) }}</dd>
       </div>
     </dl>
   </article>
