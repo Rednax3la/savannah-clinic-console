@@ -27,14 +27,25 @@ withDefaults(
 .loading {
   display: grid;
   gap: var(--space-2);
-  padding: var(--space-3) 0;
+  padding: var(--space-5);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
 }
 
 .loading__row {
-  height: var(--tap-target-min);
+  height: 4rem;
+  background-image: linear-gradient(
+    100deg,
+    transparent 20%,
+    rgb(255 255 255 / 70%) 50%,
+    transparent 80%
+  );
+  background-size: 200% 100%;
   background-color: var(--color-surface-sunken);
   border-radius: var(--radius-md);
-  animation: pulse 1.4s ease-in-out infinite;
+  animation: shimmer 1.8s ease-in-out infinite;
 }
 
 .loading__spinner {
@@ -47,9 +58,12 @@ withDefaults(
   animation: spin 0.8s linear infinite;
 }
 
-@keyframes pulse {
-  50% {
-    opacity: 0.5;
+@keyframes shimmer {
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: -200% 0;
   }
 }
 

@@ -41,7 +41,8 @@ const displayName = computed(() => {
 .app-header {
   background-color: var(--color-grape);
   color: var(--color-text-on-grape);
-  box-shadow: var(--shadow-sm);
+  box-shadow: var(--shadow-md);
+  border-bottom: 3px solid var(--color-lime);
 }
 
 .app-header__inner {
@@ -52,15 +53,27 @@ const displayName = computed(() => {
   justify-content: space-between;
   max-width: var(--layout-max-width);
   margin-inline: auto;
-  padding: var(--space-3) var(--space-4);
+  padding: var(--space-4) var(--space-4);
   min-height: var(--tap-target-min);
 }
 
 .app-header__brand {
   color: inherit;
-  font-size: var(--font-size-lg);
+  font-size: var(--font-size-xl);
+  font-family: var(--font-heading);
+  letter-spacing: 0.02em;
   font-weight: var(--font-weight-bold);
   text-decoration: none;
+}
+.app-header__user button {
+  background: var(--gradient-accent);
+  color: var(--color-text-on-lime);
+}
+@supports (backdrop-filter: blur(1px)) {
+  .app-header {
+    background: var(--color-header-glass);
+    backdrop-filter: var(--glass-blur);
+  }
 }
 
 .app-header__user {

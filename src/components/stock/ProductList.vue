@@ -43,6 +43,7 @@ withDefaults(defineProps<{ products?: readonly Product[]; listUrl?: string }>(),
     overflow-x: auto;
     border: 1px solid var(--color-border);
     border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-md);
   }
 
   .list__cards {

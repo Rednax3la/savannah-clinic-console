@@ -70,6 +70,9 @@ defineEmits<{ 'update:page': [page: number] }>()
 .pagination__button:disabled {
   cursor: not-allowed;
   background-color: var(--color-border-strong);
+  background-image: none;
+  color: var(--color-text);
+  box-shadow: none;
 }
 
 .pagination__status {

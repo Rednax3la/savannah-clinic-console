@@ -27,11 +27,18 @@ defineEmits<{
 <style scoped>
 .toolbar {
   display: grid;
-  gap: var(--space-3);
-  padding: var(--space-4);
+  gap: var(--space-4);
+  padding: var(--space-5);
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm), var(--shadow-inset);
+}
+@supports (backdrop-filter: blur(1px)) {
+  .toolbar {
+    background: var(--color-glass);
+    backdrop-filter: var(--glass-blur);
+  }
 }
 .toolbar > * {
   min-width: 0;

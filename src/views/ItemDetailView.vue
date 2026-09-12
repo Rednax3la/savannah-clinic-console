@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 import StockEditor from '@/components/stock/StockEditor.vue'
+import ProductImage from '@/components/ui/ProductImage.vue'
 import LoadingState from '@/components/ui/LoadingState.vue'
 import ErrorState from '@/components/ui/ErrorState.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
@@ -20,7 +21,7 @@ const missing = computed(() => error.value instanceof ApiError && error.value.st
 <template>
   <article class="item" aria-labelledby="item-heading">
     <RouterLink class="touch-link" :to="back">Back to stock</RouterLink>
-    <h1 id="item-heading">{{ product?.title ?? 'Stock item' }}</h1>
+    <h1 v-if="!product" id="item-heading">Stock item</h1>
     <LoadingState v-if="isLoading" label="Loading stock item" />
     <EmptyState
       v-else-if="missing"
@@ -36,18 +37,21 @@ const missing = computed(() => error.value instanceof ApiError && error.value.st
       <template v-if="product">
         <p v-if="isRefreshing" role="status">Checking for updated item details...</p>
         <div class="item__details">
-          <img
-            v-if="product.thumbnail"
-            :src="product.thumbnail"
-            :alt="product.title"
-            width="240"
-            height="240"
+          <ProductImage
+            class="item__image"
+            :src="product.images?.[0] || product.thumbnail"
+            :fallback-src="product.thumbnail"
+            :title="product.title"
+            eager
           />
-          <div>
+          <div class="item__information">
+            <p class="item__category">{{ product.category }}</p>
+            <h1 id="item-heading">{{ product.title }}</h1>
+            <p class="item__stock">
+              <strong>{{ product.stock }}</strong> in stock
+            </p>
             <p>{{ product.description }}</p>
             <dl>
-              <dt>Category</dt>
-              <dd>{{ product.category }}</dd>
               <dt>Price (USD)</dt>
               <dd>{{ product.price.toFixed(2) }}</dd>
               <template v-if="product.sku"
@@ -76,19 +80,41 @@ const missing = computed(() => error.value instanceof ApiError && error.value.st
 .item {
   display: grid;
   gap: var(--space-4);
-  padding: var(--space-4);
+  padding: clamp(1rem, 3vw, 2rem);
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
   min-width: 0;
+  box-shadow: var(--shadow-md);
 }
 .item__details {
   display: grid;
-  gap: var(--space-4);
+  gap: var(--space-5);
+  align-items: start;
 }
-.item__details img {
-  object-fit: contain;
-  height: auto;
+.item__image {
+  max-width: var(--image-size-hero);
+  justify-self: center;
+}
+.item__information {
+  display: grid;
+  gap: var(--space-3);
+  min-width: 0;
+}
+.item__category {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+}
+.item__stock {
+  color: var(--color-grape);
+}
+.item__stock strong {
+  font-family: var(--font-heading);
+  font-size: var(--font-size-2xl);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  margin-inline-end: var(--space-2);
 }
 dl {
   display: grid;
@@ -97,7 +123,8 @@ dl {
   margin-top: var(--space-4);
 }
 dt {
-  font-weight: var(--font-weight-bold);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-muted);
 }
 dd,
 h1 {
@@ -105,7 +132,7 @@ h1 {
 }
 @media (min-width: 48rem) {
   .item__details {
-    grid-template-columns: 15rem minmax(0, 1fr);
+    grid-template-columns: minmax(12rem, 1fr) minmax(0, 2fr);
   }
 }
 </style>

@@ -57,7 +57,7 @@ async function submit(): Promise<void> {
 </script>
 <template>
   <section class="editor" aria-labelledby="stock-editor-heading">
-    <h2 id="stock-editor-heading">Stock count</h2>
+    <h2 id="stock-editor-heading">Stock correction</h2>
     <p>
       <strong class="editor__value">{{ currentStock }}</strong> in stock
     </p>
@@ -85,7 +85,9 @@ async function submit(): Promise<void> {
         <button type="button" :disabled="pending" @click="close">Cancel</button>
       </div>
     </form>
-    <p role="status">{{ pending ? 'Saving stock count...' : success }}</p>
+    <p role="status" :class="{ editor__success: success }">
+      {{ pending ? 'Saving stock count...' : success }}
+    </p>
   </section>
 </template>
 <style scoped>
@@ -97,9 +99,29 @@ async function submit(): Promise<void> {
   background: var(--color-surface-muted);
   border-radius: var(--radius-lg);
   min-width: 0;
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-inset), var(--shadow-sm);
 }
 .editor__value {
   font-size: var(--font-size-2xl);
+  font-family: var(--font-heading);
+  font-weight: 500;
+  color: var(--color-grape);
+  font-variant-numeric: tabular-nums;
+  margin-right: var(--space-2);
+}
+.editor__success {
+  color: var(--color-success);
+  background: var(--color-success-surface);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+}
+.editor__actions button {
+  min-width: 7rem;
+}
+.editor__actions button[type='button'] {
+  background: var(--color-surface);
+  color: var(--color-grape);
 }
 .editor__form {
   display: grid;

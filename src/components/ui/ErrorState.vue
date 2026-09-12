@@ -39,6 +39,8 @@ defineEmits<{ retry: [] }>()
   background-color: var(--color-danger-surface);
   border: 1px solid var(--color-danger);
   border-radius: var(--radius-lg);
+  border-inline-start-width: 4px;
+  box-shadow: var(--shadow-sm);
 }
 
 .error__title {
@@ -51,6 +53,7 @@ defineEmits<{ retry: [] }>()
 }
 
 .error__retry {
+  min-width: 10rem;
   min-height: var(--tap-target-min);
   padding-inline: var(--space-4);
   color: var(--color-text-on-grape);

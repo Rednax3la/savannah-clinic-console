@@ -10,7 +10,7 @@
   <section class="not-found">
     <h1>Page not found</h1>
     <p>That link does not point to anything in this console.</p>
-    <RouterLink :to="{ name: 'stock-list' }">Go to stock list</RouterLink>
+    <RouterLink class="touch-link" :to="{ name: 'stock-list' }">Go to stock list</RouterLink>
   </section>
 </template>
 
@@ -23,5 +23,6 @@
   background-color: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
 }
 </style>

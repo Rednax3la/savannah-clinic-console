@@ -29,6 +29,7 @@ async function submit(): Promise<void> {
 </script>
 <template>
   <section class="login" aria-labelledby="login-title">
+    <p class="login__brand">Clinic Stock Console</p>
     <h1 id="login-title">Sign in</h1>
     <p>Sign in to view the clinic stock catalogue.</p>
     <form class="login__form" novalidate @submit.prevent="submit">
@@ -69,18 +70,42 @@ async function submit(): Promise<void> {
       <button type="submit" :disabled="pending">{{ pending ? 'Signing in...' : 'Sign in' }}</button>
       <p role="status" class="visually-hidden">{{ pending ? 'Signing in' : '' }}</p>
     </form>
+    <p class="login__hint">Assessment demo · Authentication provided by DummyJSON.</p>
   </section>
 </template>
 <style scoped>
 .login {
-  max-width: 26rem;
-  margin-inline: auto;
-  padding: var(--space-5);
+  max-width: 29rem;
+  margin: clamp(1rem, 8vh, 6rem) auto;
+  padding: clamp(1.5rem, 4vw, 3rem);
   display: grid;
   gap: var(--space-3);
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md), var(--shadow-inset);
+  border-top: 4px solid var(--color-lime);
+}
+.login__brand {
+  font-family: var(--font-heading);
+  font-size: var(--font-size-lg);
+  color: var(--color-grape);
+  margin-bottom: var(--space-5);
+}
+.login > p:not(.login__brand) {
+  color: var(--color-text-muted);
+}
+.login__form {
+  margin-block: var(--space-4);
+}
+.login__form button {
+  min-height: 3rem;
+}
+@supports (backdrop-filter: blur(1px)) {
+  .login {
+    background: var(--color-glass);
+    backdrop-filter: var(--glass-blur);
+  }
 }
 .login__form,
 .field {

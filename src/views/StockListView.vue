@@ -99,4 +99,17 @@ watch(isLoading, (loading) => {
   gap: var(--space-4);
   min-width: 0;
 }
+.stock > h1 {
+  margin-top: var(--space-3);
+}
+.stock > h1 + p {
+  color: var(--color-text-muted);
+  margin-top: calc(-1 * var(--space-2));
+  margin-bottom: var(--space-3);
+}
+.stock > p[role='status'] {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-muted);
+}
 </style>

@@ -25,12 +25,15 @@ withDefaults(
   padding: var(--space-6) var(--space-4);
   text-align: center;
   background-color: var(--color-surface);
-  border: 1px dashed var(--color-border-strong);
+  border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
 }
 
 .empty__title {
-  font-weight: var(--font-weight-bold);
+  font-family: var(--font-heading);
+  font-size: var(--font-size-xl);
+  color: var(--color-grape);
 }
 
 .empty__message {
