@@ -7,30 +7,21 @@ withDefaults(defineProps<{ product: Product; listUrl?: string }>(), { listUrl: '
 
 <template>
   <article class="card">
-    <div class="card__identity">
+    <RouterLink
+      class="card__identity"
+      :aria-labelledby="`product-title-${product.id}`"
+      :to="{ name: 'item-detail', params: { id: product.id }, query: { from: listUrl } }"
+    >
       <ProductImage class="card__image" :src="product.thumbnail" :title="product.title" />
-      <h3 class="card__title">
-        <!-- The whole title is the link target: a bigger tap area than an icon,
-           and the accessible name is the item name rather than "view". -->
-        <RouterLink
-          class="touch-link"
-          :to="{ name: 'item-detail', params: { id: product.id }, query: { from: listUrl } }"
-        >
-          {{ product.title }}
-        </RouterLink>
-      </h3>
-    </div>
-
+      <h2 :id="`product-title-${product.id}`" class="card__title">{{ product.title }}</h2>
+    </RouterLink>
+    <p class="card__category">{{ product.category.replaceAll('-', ' ') }}</p>
     <dl class="card__meta">
-      <div class="card__quantity">
-        <dt>Stock</dt>
+      <div>
+        <dt>In stock</dt>
         <dd class="card__stock">{{ product.stock }}</dd>
       </div>
-      <div>
-        <dt>Category</dt>
-        <dd>{{ product.category }}</dd>
-      </div>
-      <div>
+      <div class="card__price">
         <dt>Price (USD)</dt>
         <dd>{{ product.price.toFixed(2) }}</dd>
       </div>
@@ -40,18 +31,19 @@ withDefaults(defineProps<{ product: Product; listUrl?: string }>(), { listUrl: '
 
 <style scoped>
 .card {
-  display: grid;
-  gap: var(--space-2);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  height: 100%;
+  min-width: 0;
   padding: var(--space-4);
-  background-color: var(--color-surface);
+  background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-sm), var(--shadow-inset);
-  border-top: 3px solid var(--color-border-strong);
+  box-shadow: var(--shadow-sm);
   transition:
     border-color var(--transition-fast),
     box-shadow var(--transition-fast);
-  min-width: 0;
 }
 .card:hover,
 .card:focus-within {
@@ -59,62 +51,61 @@ withDefaults(defineProps<{ product: Product; listUrl?: string }>(), { listUrl: '
   box-shadow: var(--shadow-md);
 }
 .card__identity {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
-  padding-bottom: var(--space-2);
-  border-bottom: 1px solid var(--color-border-soft);
+  display: grid;
+  gap: var(--space-4);
+  min-width: 0;
+  text-decoration: none;
+  border-radius: var(--radius-md);
 }
 .card__image {
-  width: var(--image-size-card);
+  width: 100%;
+  max-width: 26rem;
+  justify-self: center;
 }
 .card__title {
-  min-width: 0;
+  font-family: var(--font-sans);
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-medium);
+  line-height: var(--line-height-base);
+  overflow-wrap: anywhere;
 }
-.card__title a {
-  text-decoration: none;
-}
-.card__title a:hover {
+.card__identity:hover .card__title {
   text-decoration: underline;
 }
-.card__stock {
-  font-family: var(--font-heading);
-  font-size: 1.75rem;
-  color: var(--color-grape);
-  font-variant-numeric: tabular-nums;
+.card__category {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+  text-transform: capitalize;
+}
+.card__meta {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: end;
+  gap: var(--space-3);
+  margin-top: auto;
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--color-border-soft);
 }
 .card__meta > div {
   min-width: 0;
   overflow-wrap: anywhere;
 }
-
-.card__title {
-  font-size: var(--font-size-base);
-}
-
-.card__meta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-4);
-  font-size: var(--font-size-sm);
-  align-items: center;
-}
-.card__quantity {
-  padding-inline-end: var(--space-4);
-  border-inline-end: 1px solid var(--color-border-soft);
-}
-.card__quantity dt {
-  color: var(--color-grape);
-  font-weight: var(--font-weight-bold);
-}
-
 dt {
   color: var(--color-text-muted);
-  font-size: var(--font-size-xs);
+  font-size: var(--font-size-sm);
 }
-
 dd {
-  margin: 0;
+  font-size: var(--font-size-lg);
   font-weight: var(--font-weight-medium);
+  font-variant-numeric: tabular-nums;
+}
+.card__stock {
+  color: var(--color-grape);
+  font-family: var(--font-heading);
+  font-size: 2rem;
+}
+.card__price {
+  text-align: right;
 }
 </style>

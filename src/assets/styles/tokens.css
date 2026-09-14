@@ -87,7 +87,7 @@
   --focus-ring-offset: 2px;
 
   /* ---- Layout ---- */
-  --layout-max-width: 75rem;
+  --layout-max-width: 100rem;
   --image-size-row: 3rem;
   --image-size-card: 4.5rem;
   --image-size-hero: 20rem;

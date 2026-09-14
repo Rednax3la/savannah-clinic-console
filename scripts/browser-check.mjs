@@ -148,6 +148,20 @@ try {
   await page.goto(`${origin}/items/17?from=%2F%3Fpage%3D2`)
   await page.getByRole('heading', { name: 'Sign in' }).waitFor()
   await noOverflow()
+  await page.locator('#main-content').focus()
+  assert.equal(
+    await page.locator('#main-content').evaluate((el) => getComputedStyle(el).outlineStyle),
+    'none',
+  )
+  await page.keyboard.press('Tab')
+  assert.equal(
+    await page.locator('#username').evaluate((el) => document.activeElement === el),
+    true,
+  )
+  assert.notEqual(
+    await page.locator('#username').evaluate((el) => getComputedStyle(el).outlineStyle),
+    'none',
+  )
   await login('bad')
   await page.getByRole('alert').filter({ hasText: 'Invalid credentials' }).waitFor()
   await login()
@@ -175,7 +189,7 @@ try {
   assert.equal(await page.locator('.editor__value').textContent(), '17')
   await noOverflow()
   await page.getByRole('link', { name: 'Back to stock' }).click()
-  await page.getByRole('heading', { name: 'Clinic stock' }).waitFor()
+  await page.getByLabel('Search stock').waitFor()
   await page.waitForFunction(
     () => document.querySelector('[aria-label="Stock page"]')?.value === '2',
   )
@@ -229,7 +243,27 @@ try {
   mkdirSync('test-results', { recursive: true })
   await page.screenshot({ path: 'test-results/stock-360.png', fullPage: true })
   await page.setViewportSize({ width: 1280, height: 900 })
-  assert(await page.locator('.list__table').isVisible())
+  assert.equal(await page.locator('table').count(), 0)
+  assert(await page.locator('.list__cards').isVisible())
+  assert(
+    await page
+      .locator('.card__image')
+      .first()
+      .evaluate((el) => el.getBoundingClientRect().width >= 240),
+  )
+  assert(
+    await page
+      .locator('.list__cards')
+      .evaluate((el) => getComputedStyle(el).gridTemplateColumns.split(' ').length >= 3),
+  )
+  assert.equal(await page.getByRole('heading', { name: 'Clinic stock', exact: true }).count(), 0)
+  await page.screenshot({ path: 'test-results/stock-desktop.png', fullPage: true })
+  await page.setViewportSize({ width: 1920, height: 1080 })
+  assert(
+    await page.locator('.list__cards').evaluate((el) => el.getBoundingClientRect().width > 1400),
+  )
+  await noOverflow()
+  await page.setViewportSize({ width: 1280, height: 900 })
   await noOverflow()
   await page.evaluate(() => {
     document.documentElement.style.fontSize = '200%'

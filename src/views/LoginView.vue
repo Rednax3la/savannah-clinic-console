@@ -18,6 +18,8 @@ async function submit(): Promise<void> {
   pending.value = true
   try {
     await auth.signIn(username.value.trim(), password.value)
+    // Authentication succeeded; clearing credentials must not trigger required-field errors.
+    attempted.value = false
     password.value = ''
     await router.replace(auth.consumeIntendedRoute() ?? '/')
   } catch (cause) {

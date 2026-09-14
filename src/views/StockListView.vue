@@ -53,7 +53,7 @@ watch(isLoading, (loading) => {
 </script>
 <template>
   <section class="stock" aria-labelledby="stock-heading">
-    <h1 id="stock-heading">Clinic stock</h1>
+    <h1 id="stock-heading" class="visually-hidden">Stock catalogue</h1>
     <p>Find supplies and check recorded stock counts.</p>
     <StockToolbar
       :query="query"
@@ -99,12 +99,8 @@ watch(isLoading, (loading) => {
   gap: var(--space-4);
   min-width: 0;
 }
-.stock > h1 {
-  margin-top: var(--space-3);
-}
 .stock > h1 + p {
   color: var(--color-text-muted);
-  margin-top: calc(-1 * var(--space-2));
   margin-bottom: var(--space-3);
 }
 .stock > p[role='status'] {

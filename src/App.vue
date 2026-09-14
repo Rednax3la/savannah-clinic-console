@@ -32,6 +32,11 @@ const auth = useAuthStore()
   margin-inline: auto;
   padding: var(--space-5) var(--space-4) var(--space-7);
 }
+/* This is a route-focus destination, not an interactive control. */
+.app-main:focus {
+  outline: none;
+  box-shadow: none;
+}
 @media (max-width: 30rem) {
   .app-main {
     padding: var(--space-4) var(--space-3) var(--space-6);
