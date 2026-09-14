@@ -38,19 +38,19 @@ No API key or secret environment variable is required.
 
 I used:
 
-* Vue 3
-* TypeScript
-* Vue Router
-* Pinia
-* Vite
-* Vitest and Happy DOM
-* ESLint
-* Prettier
-* EditorConfig
-* Husky
-* Commitlint
-* GitHub Actions
-* Vercel
+- Vue 3
+- TypeScript
+- Vue Router
+- Pinia
+- Vite
+- Vitest and Happy DOM
+- ESLint
+- Prettier
+- EditorConfig
+- Husky
+- Commitlint
+- GitHub Actions
+- Vercel
 
 The interface uses custom CSS rather than a component framework.
 
@@ -78,15 +78,15 @@ The interface uses custom CSS rather than a component framework.
 
 The main areas of the project are:
 
-* `src/api` — HTTP client and DummyJSON endpoint functions.
-* `src/composables` — product requests, categories, caching and stock correction behaviour.
-* `src/stores/auth.ts` — authentication state, token refresh and session restoration.
-* `src/utils` — URL handling, safe navigation and browser storage helpers.
-* `src/views` — login, stock list, product detail and missing-route pages.
-* `src/components` — reusable controls, stock components and UI states.
-* `docs/design.md` — my original design document.
-* `docs/ai-log.md` — record of how I used AI during the assessment.
-* `docs/browser-checklist.md` — manual verification checklist.
+- `src/api` — HTTP client and DummyJSON endpoint functions.
+- `src/composables` — product requests, categories, caching and stock correction behaviour.
+- `src/stores/auth.ts` — authentication state, token refresh and session restoration.
+- `src/utils` — URL handling, safe navigation and browser storage helpers.
+- `src/views` — login, stock list, product detail and missing-route pages.
+- `src/components` — reusable controls, stock components and UI states.
+- `docs/design.md` — my original design document.
+- `docs/ai-log.md` — record of how I used AI during the assessment.
+- `docs/browser-checklist.md` — manual verification checklist.
 
 ---
 
@@ -98,11 +98,11 @@ I deliberately separated state depending on what owns it.
 
 I keep the following in Vue Router query parameters:
 
-* search
-* category
-* sort field
-* sort order
-* page
+- search
+- category
+- sort field
+- sort order
+- page
 
 For example:
 
@@ -184,9 +184,9 @@ Stock correction uses a pessimistic update.
 
 When I save:
 
-* the input and Save button are disabled;
-* the UI shows that the save is in progress;
-* the displayed confirmed stock only changes after a successful response.
+- the input and Save button are disabled;
+- the UI shows that the save is in progress;
+- the displayed confirmed stock only changes after a successful response.
 
 If the request fails, I keep the previous confirmed stock and also keep what the user typed so they can retry.
 
@@ -196,10 +196,10 @@ To deal with this, I keep confirmed stock corrections for the signed-in tab sess
 
 These corrections:
 
-* survive a refresh;
-* belong to the signed-in user;
-* are cleared during sign-out or account change;
-* are not shared with another browser or another user.
+- survive a refresh;
+- belong to the signed-in user;
+- are cleared during sign-out or account change;
+- are not shared with another browser or another user.
 
 This is only a workaround for the mock API and is not how I would build a real shared stock system.
 
@@ -209,24 +209,24 @@ This is only a workaround for the mock API and is not how I would build a real s
 
 My data screens support:
 
-* loading
-* success
-* empty
-* error
-* retry
+- loading
+- success
+- empty
+- error
+- retry
 
 The application is also designed for keyboard use.
 
 I considered things such as:
 
-* semantic controls;
-* form labels;
-* visible keyboard focus;
-* colour contrast;
-* accessible error messages;
-* focus management;
-* mobile touch targets;
-* reduced motion.
+- semantic controls;
+- form labels;
+- visible keyboard focus;
+- colour contrast;
+- accessible error messages;
+- focus management;
+- mobile touch targets;
+- reduced motion.
 
 The stock list uses a table on wider screens and cards on smaller screens, including 360px widths.
 
@@ -291,17 +291,17 @@ I focused tests mainly on behaviours that can easily fail in real use instead of
 
 These include:
 
-* authentication restoration;
-* refresh-token behaviour;
-* concurrent refresh requests;
-* safe route restoration;
-* stale search protection;
-* URL query parsing;
-* pagination reset;
-* API errors;
-* failed stock corrections;
-* image fallbacks;
-* focus behaviour.
+- authentication restoration;
+- refresh-token behaviour;
+- concurrent refresh requests;
+- safe route restoration;
+- stale search protection;
+- URL query parsing;
+- pagination reset;
+- API errors;
+- failed stock corrections;
+- image fallbacks;
+- focus behaviour.
 
 I also used browser-level tests and still manually checked the application myself.
 
@@ -417,10 +417,10 @@ I compared what the assessment actually required, checked how DummyJSON refresh 
 
 I eventually settled on:
 
-* access token — memory;
-* refresh token — `sessionStorage`;
-* current user — Pinia;
-* intended route — temporary session state.
+- access token — memory;
+- refresh token — `sessionStorage`;
+- current user — Pinia;
+- intended route — temporary session state.
 
 That was easier for me to explain and matched the behaviour I needed.
 
@@ -448,7 +448,7 @@ I later improved the interface, but the original visual direction and responsive
 
 ## One part I would currently struggle most to defend
 
-ProductSession.ts. The stock correction persistence layer is the most subtle piece. 
+ProductSession.ts. The stock correction persistence layer is the most subtle piece.
 The withStockCorrection overlay, the confirmStock write-through, the userId scoping — it works, but if I'm asked to trace a correction through from PUT response to re-render, I'll need some prep time.
 
 ---

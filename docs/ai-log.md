@@ -46,6 +46,7 @@ Now implement the fixes and required functionality.
 You MAY modify project files.
 
 Do NOT:
+
 - make any git commits
 - push anything
 - deploy anything
@@ -63,6 +64,7 @@ The goal is to leave the repository IMPLEMENTED, TESTED, CI-READY,
 and VERCEL-READY.
 
 Before editing:
+
 1. Read the full repository.
 2. Read docs/design.md.
 3. Read the Savannah assessment.
@@ -83,6 +85,7 @@ A. AUTHENTICATION
 Implement the complete DummyJSON authentication flow.
 
 Required:
+
 - POST /auth/login
 - request expiresInMins: 1
 - GET /auth/me where appropriate
@@ -105,6 +108,7 @@ Prefer an approach based on the actual token expiry / authenticated
 endpoint behavior instead of repeatedly polling unnecessarily.
 
 When the access token expires:
+
 - attempt exactly one shared refresh when multiple requests notice expiry
 - concurrent callers should await the same refresh promise
 - a refresh request must never recursively trigger another refresh
@@ -120,6 +124,7 @@ Resolve the existing duplicate intended-route mechanisms.
 There must be one clear precedence/consumption strategy.
 
 Add useful tests for:
+
 - restoration after reload
 - intended-route handling
 - successful refresh
@@ -131,6 +136,7 @@ B. PRODUCT QUERY SEMANTICS
 ============================================================
 
 Resolve the current ambiguity around simultaneous:
+
 - search
 - category
 - sorting
@@ -147,6 +153,7 @@ preserves correct totals and pagination.
 Do NOT filter only the currently returned page.
 
 The URL remains the source of truth for:
+
 - q
 - category
 - sortBy
@@ -156,6 +163,7 @@ The URL remains the source of truth for:
 Do not mirror these into Pinia.
 
 Changing:
+
 - q
 - category
 - sortBy
@@ -176,6 +184,7 @@ C. PRODUCT LIST
 Implement StockListView completely.
 
 Required:
+
 - fetch product data
 - search
 - category filtering
@@ -199,6 +208,7 @@ Implement the assessment's stale-search requirement.
 Use AbortController as the primary cancellation mechanism.
 
 A superseded request must NEVER update:
+
 - products
 - total count
 - error state
@@ -224,6 +234,7 @@ E. PRODUCT DETAIL AND CACHE
 Implement /items/:id completely.
 
 Required:
+
 - direct URL loads correctly
 - loading state
 - error state
@@ -249,6 +260,7 @@ F. DUMMYJSON NON-PERSISTENT WRITES
 DummyJSON simulates product PUT updates but does not persist them.
 
 Do NOT implement behavior where:
+
 1. user saves stock 17,
 2. UI shows 17,
 3. an automatic background GET immediately resets it to DummyJSON's
@@ -275,17 +287,20 @@ User edits stock.
 User presses Save.
 
 Immediately:
+
 - disable input
 - disable save
 - show Saving...
 
 Success:
+
 - update confirmed displayed stock
 - preserve the simulated corrected value for the intended session behavior
 - close/reset editor appropriately
 - show brief accessible success feedback
 
 Failure:
+
 - confirmed stock remains unchanged
 - user's typed value remains
 - input re-enables
@@ -298,6 +313,7 @@ Avoid making StockEditor itself responsible for unrelated server-state
 architecture.
 
 Add a test for failed PUT preserving both:
+
 - previous confirmed stock
 - user's draft correction
 
@@ -308,6 +324,7 @@ H. API CLIENT CORRECTIONS
 Fix the issues identified in the previous review.
 
 Specifically:
+
 - response body read failures must be normalized consistently
 - malformed JSON on a declared JSON success response must not silently be
   cast to T
@@ -325,6 +342,7 @@ I. ACCESSIBILITY
 Retain semantic HTML and improve the existing accessibility foundation.
 
 Required:
+
 - all functionality keyboard accessible
 - proper form labels
 - visible focus
@@ -347,12 +365,14 @@ J. RESPONSIVE UI
 ============================================================
 
 Retain:
+
 - table layout on wider screens
 - card layout on narrow screens
 
 Verify the CSS behavior at 360px.
 
 Ensure:
+
 - no critical horizontal clipping
 - controls remain usable
 - product links and actions have adequate touch targets
@@ -396,6 +416,7 @@ The developer's current environment is Node 22.x.
 Make local, CI and Vercel runtime expectations consistent.
 
 If useful add:
+
 - .nvmrc or equivalent
 - engines entry
 
@@ -406,6 +427,7 @@ M. CONVENTIONAL COMMITS
 ============================================================
 
 Install and configure:
+
 - @commitlint/cli
 - @commitlint/config-conventional
 - Husky
@@ -430,11 +452,13 @@ Retain the deliberately strict TypeScript configuration unless a rule is
 proven counterproductive.
 
 Keep:
+
 - strict TypeScript
 - noUncheckedIndexedAccess
 - exactOptionalPropertyTypes
 
 Ensure:
+
 - npm run format:check
 - npm run lint
 - npm run type-check
@@ -515,6 +539,7 @@ Q. README
 If README.md already contains factual/project sections, you may update
 ONLY factual portions that can be derived directly from the repository,
 such as:
+
 - installation commands
 - scripts
 - project structure
@@ -524,6 +549,7 @@ such as:
 - deployment configuration
 
 DO NOT write:
+
 - my design decision log
 - rejected alternatives and reasoning
 - my AI reflection
